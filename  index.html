@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#050d2b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="星念宇宙">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="icon" type="image/png" href="logo_V1.1.png">
+<link rel="apple-touch-icon" href="apple-touch-icon_V1.1.png">
+<title>星念宇宙</title>
+<style>
+:root{--bg:#050d2b;--panel:rgba(12,24,60,.92);--line:rgba(153,184,255,.22);--text:#edf3ff;--muted:#93a5d2;--blue:#76baff;--gold:#f5d68a}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text);overflow:hidden;overscroll-behavior:none}
+button,input,textarea,select{font:inherit}button{cursor:pointer;color:inherit}
+#app{position:fixed;inset:0;overflow:hidden;background:radial-gradient(ellipse at 50% 42%,#142d69 0%,#0a1b47 36%,#050d2b 72%,#020719 100%)}
+#stars{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;filter:drop-shadow(0 0 2px #9fcaff55)}
+
+.pill{border:1px solid rgba(143,177,255,.3);background:radial-gradient(circle at 30% 25%,#b7d7ff55,#294d91 35%,#0a1945 78%);border-radius:30px;padding:9px 13px;color:#e4eeff;font-size:12px;backdrop-filter:blur(12px);box-shadow:inset -5px -6px 12px #02071988,inset 3px 3px 8px #ffffff24,0 0 14px #477edc22}
+.iconbtn{width:52px;height:52px;border:0;background:transparent;box-shadow:none;overflow:visible;display:grid;place-items:center;}
+.settings{width:40px;height:40px;font-size:16px;border-color:rgba(143,177,255,.3);color:#e3edff;background:radial-gradient(circle at 30% 25%,#d5e4ff,#7898d8 24%,#263d76 65%,#08122e 100%)}
+
+#universe{position:absolute;inset:0;overflow:hidden;touch-action:pan-y;z-index:1;isolation:isolate}
+.planet{position:absolute;display:flex;flex-direction:column;align-items:center;gap:9px;transform:translate(-50%,-50%) scale(var(--user-scale,1));transform-origin:center center;border:0;background:none;padding:0;max-width:140px;z-index:2;animation:float 6s ease-in-out infinite alternate;touch-action:none;user-select:none;-webkit-user-select:none;will-change:left,top,transform}
+.planet-core{width:clamp(64px,14vw,104px);height:clamp(64px,14vw,104px);animation:planetPulse 4.5s ease-in-out infinite;border-radius:50%;position:relative;display:block;box-shadow:0 0 18px var(--glow),0 0 42px color-mix(in srgb,var(--glow) 60%,transparent),inset -10px -12px 22px #02071966,inset 7px 6px 17px #ffffff66;background:radial-gradient(circle at 33% 27%,#ffffffa8 0%,var(--planet) 28%,var(--planet) 58%,color-mix(in srgb,var(--planet) 45%,#07102d) 100%)}
+.planet-core:after{content:"";position:absolute;inset:-5px;border-radius:50%;border:1px solid color-mix(in srgb,var(--glow) 32%,transparent);filter:blur(1px)}
+.planet-name{font-family:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;font-size:15px;font-weight:600;letter-spacing:1.2px;color:#edf5ff;text-shadow:0 1px 3px #020719,0 0 10px #7faeff66;max-width:118px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.planet-meta{font-family:"PingFang SC","Hiragino Sans GB",sans-serif;font-size:11px;font-weight:500;letter-spacing:.5px;color:#a9c8ff;text-shadow:0 1px 5px #000;margin-top:-5px}
+.planet.done-look{opacity:.75;filter:saturate(.75)}
+@keyframes float{0%{margin-top:-13px;margin-left:-5px}50%{margin-top:10px;margin-left:7px}100%{margin-top:-7px;margin-left:-3px}} 
+@keyframes planetPulse{0%,100%{filter:brightness(.96);box-shadow:0 0 14px var(--glow),0 0 32px color-mix(in srgb,var(--glow) 55%,transparent),inset -10px -12px 22px #02071966,inset 7px 6px 17px #ffffff55}50%{filter:brightness(1.16);box-shadow:0 0 22px var(--glow),0 0 48px color-mix(in srgb,var(--glow) 70%,transparent),inset -10px -12px 22px #02071966,inset 7px 6px 17px #ffffff55}}
+.empty{position:absolute;left:50%;top:25%;transform:translate(-50%,-50%);width:80%;text-align:center;color:#8094c8;line-height:1.9;font-size:14px;pointer-events:none}
+.empty .glow{font-size:38px;display:block;color:#9ec9ff;text-shadow:0 0 24px #5b9dff;margin-bottom:8px}
+
+.utility-sphere{position:relative;width:60px;height:62px;border:0;background:transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:0;overflow:visible}
+.utility-core{position:relative;display:grid;place-items:center;width:52px;height:52px;border-radius:50%;box-shadow:inset -7px -8px 13px #020719aa,inset 4px 4px 10px #ffffff6b,0 0 18px #66aaff88;animation:utilityFloat 4.8s ease-in-out infinite,utilityGlow 3.2s ease-in-out infinite alternate}
+.task-core{background:radial-gradient(circle at 30% 25%,#f3fcff 0%,#86dcff 13%,#387fda 39%,#15336f 72%,#06112e 100%);border:1px solid #9ad8ff88}
+.task-core:after{content:"";position:absolute;inset:-4px;border-radius:50%;border:1px solid #72c8ff77;box-shadow:0 0 13px #55b8ff55}
+.system-core{background:radial-gradient(circle at 30% 25%,#fff9df 0%,#f5d58b 12%,#c58d43 34%,#5b3c54 64%,#101b43 100%);border:1px solid #f5d68a99;box-shadow:inset -7px -8px 13px #020719aa,inset 4px 4px 10px #ffffff77,0 0 20px #f5d68a66}
+.system-core:after{content:"";position:absolute;inset:-4px;border:1px solid #f5d68a55;border-radius:50%;box-shadow:0 0 12px #f5d68a55}
+.orb-label{font-size:10px;line-height:1.1;color:#f4f8ff;text-shadow:0 1px 5px #000,0 0 8px #8bcaffaa;letter-spacing:.1px;white-space:nowrap;font-weight:650}.system-core .orb-label{color:#fff1c9;text-shadow:0 1px 5px #28170b,0 0 8px #f5d68a88}
+.utility-count{position:absolute;top:0;right:-1px;min-width:17px;height:17px;border-radius:9px;padding:0 4px;background:#8bd9ff;color:#06122d;font-size:10px;line-height:17px;font-weight:700;box-shadow:0 0 9px #7ad6ff88}
+.small-task-core{width:43px!important;height:43px!important}
+.task-sphere{width:54px;height:58px}
+.plus-core{width:44px;height:44px;color:#f5fbff;font-size:27px;font-weight:300;background:radial-gradient(circle at 30% 25%,#fff 0%,#a6f4ff 13%,#45a6e8 34%,#1761ad 65%,#071633 100%);border:1px solid #a9edff99;box-shadow:inset -7px -8px 13px #020719aa,inset 4px 4px 10px #ffffff77,0 0 22px #51d4ff99}
+.task-core .orb-label{font-size:9px}
+.plus-core .orb-label{font-size:9px}
+.system-core .orb-label{font-size:9px}
+
+.sys-planet .planet-core{display:grid;place-items:center;animation:utilityGlow 3.2s ease-in-out infinite alternate}
+.sys-planet .orb-label{font-size:12px;font-weight:650;pointer-events:none}
+
+@keyframes utilityGlow{from{filter:brightness(.94)}to{filter:brightness(1.2)}}
+@keyframes utilityFloat{0%,100%{transform:translate(0,0)}25%{transform:translate(7px,-5px)}50%{transform:translate(2px,6px)}75%{transform:translate(-7px,-2px)}}
+@media (prefers-reduced-motion:reduce){.utility-core {animation:none!important}}
+
+.overlay{position:absolute;inset:0;background:#010719a8;backdrop-filter:blur(9px);z-index:10;display:none;align-items:flex-end;justify-content:center}
+.overlay.show{display:flex}
+.sheet{width:100%;max-height:88%;overflow:auto;background:linear-gradient(180deg,rgba(17,34,78,.98),rgba(5,13,39,.99));border:1px solid var(--line);border-bottom:0;border-radius:24px 24px 0 0;padding:22px 20px calc(env(safe-area-inset-bottom) + 22px);box-shadow:0 -18px 60px #0008}
+.sheet.full-task{height:100%;max-height:100%;border-radius:0;border:0;padding-top:calc(env(safe-area-inset-top) + 18px);padding-bottom:calc(env(safe-area-inset-bottom) + 22px)}.overlay.task-overlay{align-items:stretch}.overlay.task-overlay .sheet{margin:0;max-width:none}.sheet-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}.sheet h2{font-size:20px;margin:0;font-weight:650}.close{border:0;background:#ffffff12;border-radius:50%;width:34px;height:34px;font-size:20px}
+label{display:block;color:#a9b9e5;font-size:12px;margin:14px 0 7px}
+input,textarea,select{width:100%;border:1px solid rgba(139,171,246,.24);border-radius:12px;background:#06112f;color:#f1f5ff;padding:12px 13px;outline:none}textarea{min-height:90px;resize:vertical}input:focus,textarea:focus,select:focus{border-color:#72aaff;box-shadow:0 0 0 3px #4e8eff20}
+.row{display:flex;gap:10px}.row>*{flex:1;min-width:0}
+.primary{border:0;border-radius:12px;padding:13px 16px;background:linear-gradient(100deg,#5a9dff,#8a8bff);color:white;font-weight:650;width:100%;margin-top:18px;box-shadow:0 8px 24px #3979e833}
+.secondary{border:1px solid var(--line);border-radius:12px;padding:11px 14px;background:#ffffff09;color:#c5d5ff}
+.danger{color:#ffaaa9;border-color:#ff777744}.muted{font-size:12px;color:#879bc9;line-height:1.7}.progress-wrap{height:8px;border-radius:9px;background:#ffffff14;overflow:hidden;margin:10px 0 7px}.progress-bar{height:100%;background:linear-gradient(90deg,#60c8ff,#9c9aff);border-radius:9px;box-shadow:0 0 12px #60c8ff88;transition:width .25s}
+.progress-number{font-size:12px;color:#a8c6ff}.section-title{font-size:13px;color:#9db4e9;margin:22px 0 8px}.list{display:flex;flex-direction:column;gap:8px}.item{border:1px solid var(--line);background:#ffffff08;border-radius:12px;padding:11px 12px}.item strong{font-size:14px}.item p{font-size:12px;color:#9aaddb;margin:5px 0 0;line-height:1.6}.chip{display:inline-block;border:1px solid var(--line);border-radius:20px;padding:4px 8px;font-size:11px;color:#a9c6ff;margin-right:5px}
+.tabs{display:flex;gap:8px;margin:14px 0}.tab{flex:1;border:1px solid var(--line);background:#ffffff08;border-radius:10px;padding:9px 5px;color:#aabbe6;font-size:12px}.tab.active{background:#6c9dff25;border-color:#77aaff;color:white}
+.toast{position:absolute;z-index:30;bottom:70px;left:50%;transform:translateX(-50%);background:#182a54;border:1px solid #7299e555;padding:10px 16px;border-radius:20px;font-size:13px;white-space:nowrap;display:none;white-space:normal;max-width:88%}
+.toast-act{margin-left:10px;border:1px solid #7299e5;background:#294d91;border-radius:12px;padding:3px 12px;color:#fff;font-size:13px}
+.mini-btn{border:1px solid var(--line);background:#ffffff0b;border-radius:10px;padding:9px 11px;color:#d7e4ff}
+.todo-card{border:1px solid #7898e344;background:linear-gradient(135deg,#172b50dd,#0b1735ee);border-radius:16px;padding:12px;margin:10px 0}
+.todo-line{display:flex;align-items:flex-start;gap:9px;padding:10px 2px;border-bottom:1px solid #ffffff10;font-size:14px;line-height:1.5}
+.todo-line:last-child{border-bottom:0}.todo-line input{width:18px;height:18px;margin:2px 0 0;flex:0 0 auto;accent-color:#82baff}
+.todo-line.done span{text-decoration:line-through;color:#7e91b7}
+.sheet.note-page{height:100%;max-height:100%;border-radius:0;border:0;background:#050b1c;display:flex;flex-direction:column;padding:calc(env(safe-area-inset-top) + 10px) 16px calc(env(safe-area-inset-bottom) + 10px)}
+.note-top{display:flex;align-items:center;gap:10px}
+.note-title{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center;font-size:16px;font-weight:600}
+.note-top .primary{width:auto;margin:0;padding:9px 18px}.note-top .secondary{padding:9px 12px}
+.note-area{flex:1;min-height:0;margin-top:6px;resize:none;border:0;border-top:1px solid #26375f;border-radius:0;background:transparent;padding:16px 2px;font-size:17px;line-height:1.95;box-shadow:none}
+.note-area:focus{box-shadow:none}
+.note-foot{font-size:11px;color:#6f84b5;text-align:right;padding-top:6px}
+.sheet.tall{height:calc(100% - env(safe-area-inset-top,0px) - 12px);max-height:none;display:flex;flex-direction:column}
+.sheet.tall>*{flex:none}
+.sheet.tall #ideaText{flex:1 1 auto;min-height:150px}
+.sheet.tall #ideaGoal{min-height:90px!important}
+.sheet.tall #createSave{margin-top:14px}
+.editor-toolbar{display:flex;gap:7px;flex-wrap:wrap;margin:10px 0}.editor-toolbar button{border:1px solid #34466f;background:#101d3a;color:#dce7ff;border-radius:9px;padding:8px 10px}
+.editor-toolbar button:disabled{opacity:.35}
+#app::before{content:"";position:absolute;inset:-15%;background:var(--ov,none);pointer-events:none;animation:ovMove 90s ease-in-out infinite alternate}
+@keyframes ovMove{from{transform:translate3d(-3%,-2%,0) rotate(-5deg) scale(1.06)}to{transform:translate3d(3%,2%,0) rotate(5deg) scale(1.14)}}
+@media (prefers-reduced-motion:reduce){#app::before{animation:none}}
+.theme-select{width:100%;padding:11px 12px;border-radius:12px;border:1px solid #34466f;background:#101d3a;color:#dce7ff;font-size:15px}
+.kw-chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.kw-chip{border:1px solid #34466f;background:#101d3a;color:#dce7ff;border-radius:16px;padding:5px 12px;font-size:13px}
+textarea::placeholder,input::placeholder{color:rgba(145,165,210,.30)}
+.muted.soft{color:#5f7199;opacity:.8}
+@media(min-width:700px){.sheet{max-width:560px;border:1px solid var(--line);border-radius:24px;margin-bottom:24px}.overlay{align-items:center}.planet-core{width:100px;height:100px}}
+@media(max-width:430px){.planet-name{font-size:14px;letter-spacing:.8px}.planet-core{filter:saturate(1.08)}}
+</style>
+</head>
+<body>
+<div id="app">
+<canvas id="stars"></canvas>
+<div id="universe"><div id="planetLayer"></div><div class="empty" id="empty"><span class="glow">✦</span>这里是你的私人宇宙<br>想到什么，就把它放进来。<br>不用现在就决定要不要行动。</div></div>
+<div class="overlay" id="overlay"><div class="sheet" id="sheet"></div></div>
+<div class="toast" id="toast"></div>
+</div>
+<script>
+(()=>{
+const $=id=>document.getElementById(id);
+const colors=[['#58a9ff','#4e9df4'],['#a4e75a','#75d64d'],['#4fe0e5','#31c8d0'],['#d49bff','#a16bff'],['#ffbd76','#ff9b62'],['#ff83b5','#f35c9b'],['#e8e56b','#c8d84f'],['#ff7070','#ff5555'],['#8f9bff','#6f7dff'],['#5fe3a8','#34c98a']];
+let planets=[],links=[],todos=[],selected=null,linkMode=false;
+const sysPlanets = [
+  {id:'__todo__', title:'任务星', isSystem:true, sysType:'todo', x:0.35, y:0.46, vx:(Math.random()-.5)*.0009, vy:(Math.random()-.5)*.0009, scale:1, depth:0.95, color:0, progress:15},
+  {id:'__add__', title:'灵感星', isSystem:true, sysType:'add', x:0.5, y:0.54, vx:(Math.random()-.5)*.0009, vy:(Math.random()-.5)*.0009, scale:1, depth:1, color:2, progress:25},
+  {id:'__settings__', title:'系统星', isSystem:true, sysType:'settings', x:0.65, y:0.46, vx:(Math.random()-.5)*.0009, vy:(Math.random()-.5)*.0009, scale:1, depth:0.95, color:4, progress:15}
+];
+try{
+  const savedSys = JSON.parse(localStorage.getItem('star_mind_sys')||'{}');
+  sysPlanets.forEach(sp=>{if(savedSys[sp.id]){sp.x=savedSys[sp.id].x??sp.x;sp.y=savedSys[sp.id].y??sp.y;sp.scale=1;}});
+}catch(e){}
+const allActive=()=>[...sysPlanets, ...active()];
+const findAny=id=>sysPlanets.find(x=>x.id===id)||planets.find(x=>x.id===id);
+
+let lastBackup=localStorage.getItem('star_mind_last_backup')||'';
+try{todos=JSON.parse(localStorage.getItem('star_mind_todos')||'[]')}catch(e){todos=[]}
+try{planets=JSON.parse(localStorage.getItem('star_mind_planets')||'[]');links=JSON.parse(localStorage.getItem('star_mind_links')||'[]')}catch(e){}
+(()=>{const seen=new Set();planets.forEach(p=>{if(!p)return;if(!Number.isFinite(Number(p.depth)))p.depth=pickDepth();let c=Number(p.color);if(!Number.isInteger(c)||c<0||c>=colors.length||(seen.has(c)&&seen.size<colors.length)){p.color=pickColor();c=p.color}seen.add(c)})})();
+planets.forEach(p=>{if(p){p.scale=1;delete p.scaleAt}});
+planets.forEach(p=>{if(p&&Array.isArray(p.notes)&&p.notes.length>1)mergeNotes(p)});
+planets.forEach(p=>{if(p&&p.done&&p.autoDone===undefined)p.autoDone=!!(p.steps&&p.steps.length&&p.steps.every(x=>x.done))});
+const save=()=>{
+ try{
+  localStorage.setItem('star_mind_planets',JSON.stringify(planets));
+  localStorage.setItem('star_mind_links',JSON.stringify(links));
+  localStorage.setItem('star_mind_todos',JSON.stringify(todos));
+  const sysState={};sysPlanets.forEach(sp=>sysState[sp.id]={x:sp.x,y:sp.y});
+  localStorage.setItem('star_mind_sys',JSON.stringify(sysState));
+  updateCounts();return true;
+ }catch(e){toast('保存失败：浏览器存储空间可能不足，请先导出备份');return false}
+};
+const updateCounts=()=>{const t=$('todoCount'),c=$('completedCount');if(t){const n=todos.filter(x=>!x.done).length;t.textContent=n;t.style.display=n?'block':'none';}if(c)c.textContent=planets.filter(p=>p.done&&!p.abandoned).length};
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const active=()=>planets.filter(p=>p && p.done!==true && p.abandoned!==true && p.paused!==true);
+const localStamp=iso=>{try{return new Date(iso).toLocaleString(undefined,{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'})}catch(e){return iso||'时间未知'}};
+function playSound(){sweep()}
+let toastT;
+function toast(s,act){const t=$('toast');t.textContent=s;
+ if(act){const b=document.createElement('button');b.className='toast-act';b.textContent=act.label;b.onclick=()=>{act.fn();t.style.display='none'};t.appendChild(b)}
+ t.style.display='block';clearTimeout(toastT);if(!(act&&act.sticky))toastT=setTimeout(()=>t.style.display='none',act?6000:2200)}
+let pinchState=null;
+function bindPinchZoom(){
+ const layer=$('planetLayer');
+ layer.addEventListener('touchstart',e=>{
+  if(e.touches.length===2){
+   const target=e.target.closest('.planet');if(!target)return;
+   const id=target.dataset.pid;if(!id)return;
+   const dx=e.touches[0].clientX-e.touches[1].clientX,dy=e.touches[0].clientY-e.touches[1].clientY;
+   pinchState={id,dist:Math.hypot(dx,dy),scale:Number(findAny(id)?.scale||1)};
+  }
+ },{passive:true});
+ layer.addEventListener('touchmove',e=>{
+  if(!pinchState||e.touches.length!==2)return;
+  const dx=e.touches[0].clientX-e.touches[1].clientX,dy=e.touches[0].clientY-e.touches[1].clientY;
+  const dist=Math.hypot(dx,dy),p=findAny(pinchState.id);if(!p)return;
+  p.scale=Math.max(.55,Math.min(2.2,pinchState.scale*dist/pinchState.dist));p.scaleAt=Date.now();
+  const el=layer.querySelector(`[data-pid="${pinchState.id}"]`),cc=el&&el.querySelector('.planet-core');if(cc)cc.style.width=cc.style.height=coreSize(p)+'px';
+ },{passive:true});
+ layer.addEventListener('touchend',()=>{if(pinchState){save();pinchState=null}},{passive:true});
+}
+function render(){
+ if($('completedCount'))$('completedCount').textContent=planets.filter(p=>p.done&&!p.abandoned).length;
+ if($('abandonedCount'))$('abandonedCount').textContent=planets.filter(p=>p.abandoned).length;
+ const layer=$('planetLayer');layer.innerHTML='';
+ $('empty').style.display=active().length?'none':'block';
+ const box=$('universe').getBoundingClientRect(),w=box.width,h=box.height;
+ allActive().forEach((p,i)=>{
+   if(!p || !p.id) return;
+   if(!Number.isFinite(Number(p.color))) p.color=i%colors.length;
+   if(!Array.isArray(p.steps)) p.steps=[];if(!Number.isFinite(Number(p.depth)))p.depth=pickDepth();
+   if(p.x==null||p.y==null){const a=(i*2.399)%6.283,r=.18+((i%4)*.075);p.x=Math.max(.13,Math.min(.87,.5+Math.cos(a)*r));p.y=Math.max(.14,Math.min(.84,.5+Math.sin(a)*r));}
+   const L=lim(p,w,h);p.x=Math.max(L.x0,Math.min(L.x1,p.x));p.y=Math.max(L.y0,Math.min(L.y1,p.y));
+   const [planet,glow]=colors[((Number(p.color)%colors.length)+colors.length)%colors.length]||colors[0];
+   const b=document.createElement('button');b.className='planet'+(p.isSystem?' sys-planet':'');b.dataset.pid=p.id;b.style.left=(p.x*100)+'%';b.style.top=(p.y*100)+'%';b.style.animationDelay=(-i*.8)+'s';b.style.zIndex=String(2+Math.round(p.depth*10));b.style.opacity=(.62+.38*p.depth).toFixed(2);b.style.filter=p.depth<.5?`blur(${((.5-p.depth)*2).toFixed(1)}px) saturate(.85)`:'none';b.style.setProperty('--planet',planet);b.style.setProperty('--glow',glow);
+   const size=coreSize(p);
+   if(p.isSystem){
+     let coreClass = p.sysType==='todo'?'task-core':p.sysType==='add'?'plus-core':'system-core';
+     let badge = p.sysType==='todo'?`<span class="utility-count" id="todoCount" style="top:-2px;right:-2px">${todos.filter(x=>!x.done).length}</span>`:'';
+     b.innerHTML=`<span class="planet-core utility-core ${coreClass}" style="width:${size}px;height:${size}px"><span class="orb-label">${esc(p.title)}</span>${badge}</span>`;
+   } else {
+     b.innerHTML=`<span class="planet-core" style="width:${size}px;height:${size}px"></span><span class="planet-name" style="font-size:${Math.round(11+4*p.depth)}px">${esc(p.title)}</span>${(p.steps||[]).length?`<span class="planet-meta">${p.progress||0}%</span>`:''}`;
+   }
+   let gesture=null,lastTap=0,moved=false,scale=Number(p.scale||1);
+   b.addEventListener('pointerdown',e=>{
+    e.preventDefault();b.setPointerCapture(e.pointerId);moved=false;dragging.add(p.id);
+    gesture={id:e.pointerId,startX:e.clientX,startY:e.clientY,origX:p.x,origY:p.y,lastX:e.clientX,lastY:e.clientY,lastT:performance.now(),vx:0,vy:0};
+   });
+   b.addEventListener('pointermove',e=>{
+    if(!gesture||gesture.id!==e.pointerId)return;
+    const dx=e.clientX-gesture.startX,dy=e.clientY-gesture.startY;
+    if(Math.abs(dx)>5||Math.abs(dy)>5)moved=true;
+    if(moved){
+      const rect=$('universe').getBoundingClientRect(),L=lim(p,rect.width,rect.height);
+      p.x=Math.max(L.x0,Math.min(L.x1,gesture.origX+dx/rect.width));
+      p.y=Math.max(L.y0,Math.min(L.y1,gesture.origY+dy/rect.height));
+      const now=performance.now(),dt=Math.max(1,now-gesture.lastT);
+      gesture.vx=gesture.vx*.5+.5*(e.clientX-gesture.lastX)/dt;gesture.vy=gesture.vy*.5+.5*(e.clientY-gesture.lastY)/dt;
+      gesture.lastX=e.clientX;gesture.lastY=e.clientY;gesture.lastT=now;
+      b.style.left=(p.x*100)+'%';b.style.top=(p.y*100)+'%';
+    }
+   });
+   b.addEventListener('pointerup',e=>{
+    if(!gesture||gesture.id!==e.pointerId)return;
+    const wasMoved=moved,g=gesture;gesture=null;dragging.delete(p.id);
+    if(wasMoved){
+      const rect=$('universe').getBoundingClientRect(),stale=performance.now()-g.lastT>90;
+      let fx=stale?0:g.vx*16.7,fy=stale?0:g.vy*16.7;const sp=Math.hypot(fx,fy);if(sp>14){fx*=14/sp;fy*=14/sp}
+      p.vx=fx/rect.width;p.vy=fy/rect.height;save();return;
+    }
+    if(p.isSystem){
+      playSound();
+      if(p.sysType==='todo')openTodos(false);
+      else if(p.sysType==='add')openCreate();
+      else if(p.sysType==='settings')settings();
+      return;
+    }
+    const now=Date.now();if(now-lastTap<360){lastTap=0;playSound();openDetail(p.id)}else{lastTap=now}
+   });
+   b.addEventListener('pointercancel',()=>{gesture=null;dragging.delete(p.id);save()});
+   layer.appendChild(b);
+ });
+ save();
+}
+function fitNote(){const s=$('sheet'),v=window.visualViewport;
+ if(s.classList.contains('note-page'))s.style.height=(v?v.height:innerHeight)+'px';
+ else if(s.classList.contains('tall'))s.style.height=(v&&v.height<innerHeight-80)?(v.height-8)+'px':'';
+ else s.style.height=''}
+if(window.visualViewport)visualViewport.addEventListener('resize',fitNote);
+function showSheet(html,mode){const s=$('sheet'),o=$('overlay');s.innerHTML=html;
+ s.classList.toggle('full-task',mode==='task');s.classList.toggle('note-page',mode==='note');s.classList.toggle('tall',mode==='tall');
+ o.classList.toggle('task-overlay',mode==='task'||mode==='note');o.classList.add('show');o.scrollTop=0;fitNote()}
+function closeSheet(){$('overlay').classList.remove('show','task-overlay');$('sheet').classList.remove('full-task','note-page','tall');$('sheet').style.height='';selected=null;linkMode=false}
+$('overlay').addEventListener('click',e=>{if(e.target===$('overlay'))closeSheet()});
+function openCreate(){
+ showSheet(`<div class="sheet-head"><h2>放入一个新星球</h2><button class="close" id="x">×</button></div>
+ <p class="muted soft">先记下来，不用现在决定做不做。</p>
+ <label>写下你的想法</label><textarea id="ideaText" placeholder="想到什么就写什么，短一点、乱一点都可以。"></textarea>
+ <label>你想达到什么结果？</label><textarea id="ideaGoal" style="min-height:68px" placeholder="做成什么样，才算完成？（可以先空着）"></textarea>
+ <label>星球名称</label><input id="ideaTitle" placeholder="不填的话，会自动取关键词"><div class="kw-chips" id="kwChips"></div>
+ <div class="muted soft">生成后，它会在星空里慢慢漂。想推进时，双击它。</div>
+ <button class="primary" id="createSave">生成星球</button>`,'tall');
+ $('x').onclick=closeSheet;
+ const text=$('ideaText'),title=$('ideaTitle');
+ text.oninput=()=>{const ks=extractKeywords(text.value);if(!title.dataset.edited)title.value=ks[0]||'';$('kwChips').innerHTML=ks.length>1?ks.map(k=>`<button type="button" class="kw-chip">${esc(k)}</button>`).join(''):'';document.querySelectorAll('.kw-chip').forEach(b=>b.onclick=()=>{title.value=b.textContent;title.dataset.edited='1'})};
+ title.oninput=()=>title.dataset.edited='1';
+ $('createSave').onclick=()=>{
+  const saveBtn=$('createSave');if(saveBtn.dataset.busy==='1')return;
+  const body=text.value.trim(),goal=$('ideaGoal').value.trim();
+  if(!body){toast('先写下你的想法');text.focus();return}
+  try{
+   saveBtn.dataset.busy='1';saveBtn.disabled=true;
+   const now=new Date().toISOString();
+   const name=(title.value.trim()||guessTitle(body)||'新想法').replace(/星球$/,'').slice(0,18)||'新想法';if(title.dataset.edited==='1')learnWord(name,body);
+   const p={id:Date.now().toString(36)+Math.random().toString(36).slice(2,8),title:name,body,goal,next:'',blocker:'',notes:[],steps:[],progress:0,status:'进行中',kind:'星球',done:false,abandoned:false,paused:false,color:pickColor(),depth:pickDepth(),x:null,y:null,created:now,updated:now};
+   planets.push(p);
+   if(!save()){planets.pop();saveBtn.disabled=false;delete saveBtn.dataset.busy;return}
+   closeSheet();render();chime();toast('新星球已生成');
+  }catch(err){saveBtn.disabled=false;delete saveBtn.dataset.busy;toast('创建失败，请重试')}
+ };
+}
+const KW_STOP=['我想要','我想学','我想做','我想去','我想练','我想','我要','我准备','我打算','我需要','想要去','想去','想要','想学','想做','想练','想写','想玩','想吃','想看','想买','想卖','准备','打算','需要','今天','明天','后天','突然','但是','可是','不过','不知道','不确定','不清楚','怎么样','怎么才能','怎么','怎样','如何','为什么','哪里','哪儿','什么','能不能','可不可以','是不是','有没有','应该','可以','可能','一下','一些','一点','感觉','觉得','比较','特别','非常','然后','所以','因为','如果','或者','还是','以及','并且','而且','已经','正在','开始','继续','尝试','试试','看看','研究','了解','学习','练习','学会','最快','更好','才能','能够','自己','亲手','大概','好像','真的','其实','就是','还有','还要','帮我','给我','我们','你们','大家','现在','这么','那么','这样','那样','这个','那个'];
+const KW_PART='的了吗呢吧啊呀把被也又很挺和跟与我你他她它';
+const KW_WEAK=new Set(['好吃','好玩','好看','简单','方便','快速','便宜','有趣','不错','很好','好用','最好','比如','例如','一样','一起','这个','那个','这样','那样','一个','两个','一种','东西','事情','问题','时候','现在','以后','之前','今年','明年','周围']);
+const KW_LEAD='去来在给让对从到是有会能要想做学练',KW_TAIL='去来了过着',KW_VERB='卖买赚学做玩吃写拍开找搜查用靠从到向往';
+function vocabList(){let v=[];try{v=JSON.parse(localStorage.getItem('star_mind_vocab')||'[]')}catch(e){}return [...new Set([...v,...planets.map(p=>p.title)])].filter(w=>w&&w.length>=2&&w!=='新想法')}
+function learnWord(w,body){if(!w||w.length<2||w.length>8||!body.includes(w))return;let v=[];try{v=JSON.parse(localStorage.getItem('star_mind_vocab')||'[]')}catch(e){}if(!v.includes(w)){v.push(w);try{localStorage.setItem('star_mind_vocab',JSON.stringify(v.slice(-300)))}catch(e){}}}
+function extractKeywords(text){
+ const raw=String(text||'').trim();if(!raw)return[];
+ const cand=new Map(),add=(w,sc)=>{w=w.trim();if(w.length<2||w.length>8)return;if(KW_WEAK.has(w))sc-=20;cand.set(w,Math.max(cand.has(w)?cand.get(w):-99,sc))};
+ vocabList().forEach(w=>{if(raw.includes(w))add(w,200+w.length)});
+ const clean=raw.replace(/[^\u4e00-\u9fa5A-Za-z0-9]/g,'|');
+ const hasStop=k=>KW_STOP.some(w=>k.includes(w))||[...k].some(c=>KW_PART.includes(c));
+ for(let L=6;L>=2;L--){const seen={};for(let i=0;i+L<=clean.length;i++){const sub=clean.slice(i,i+L);if(sub.includes('|'))continue;seen[sub]=(seen[sub]||0)+1}
+  for(const k in seen)if(seen[k]>=2&&!hasStop(k))add(k,100+k.length)}
+ let t=clean;[...KW_STOP].sort((a,b)=>b.length-a.length).forEach(w=>{t=t.split(w).join('|')});
+ t=t.replace(new RegExp('['+KW_PART+']','g'),'|');
+ t.split('|').forEach((c,idx)=>{
+  c=c.replace(/^[做弄搞买吃写看学开]?[一二两三几这那][个份件套次种点些款条本]/,'');
+  while(c.length>=3&&KW_LEAD.includes(c[0]))c=c.slice(1);
+  while(c.length>=3&&KW_TAIL.includes(c[c.length-1]))c=c.slice(0,-1);
+  if(c.length<2)return;
+  if(c.length>5){
+   const parts=c.split(new RegExp('['+KW_VERB+']')).filter(x=>x.length>=2);
+   if(parts.length>1){parts.forEach((x,k)=>add(x.slice(0,6),10-idx*.5-k));return}
+   add(c.slice(0,4),8-idx*.5);add(c.slice(-4),6-idx*.5);return}
+  add(c,10-Math.abs(c.length-3)-idx*.5)});
+ const arr=[...cand.entries()].sort((a,b)=>b[1]-a[1]).map(x=>x[0]),out=[];
+ arr.forEach(w=>{if(out.length<4&&!out.some(o=>o.includes(w)||w.includes(o)))out.push(w)});
+ if(!out.length){const f=clean.replace(/\|/g,'').slice(0,4);return f.length>=2?[f]:[]}
+ return out}
+function guessTitle(s){return extractKeywords(s)[0]||''}
+function openDetail(id,openTab){
+ const p=planets.find(x=>x.id===id);if(!p)return;selected=id;
+ if(!p.steps)p.steps=[];
+ const doneLabel=p.abandoned?'已放弃':p.done?'已完成':p.paused?'暂时搁置':(p.kind||p.status||'星球');
+ showSheet(`<div class="sheet-head"><div><span class="chip">${esc(doneLabel)}</span><div id="titleRow" style="display:flex;align-items:center;gap:8px;margin-top:8px"><h2 id="titleText" style="margin:0">${esc(p.title)}星球</h2><button class="mini-btn" id="renameBtn" aria-label="修改星球名称">✎ 改名</button></div><div class="muted" style="margin-top:6px">创建于 ${esc(localStamp(p.created))} · 最近更新 ${esc(localStamp(p.updated||p.created))}</div></div><button class="close" id="x">×</button></div>
+ <div class="item" style="margin-top:8px"><span class="muted">最初的想法</span><p style="font-size:14px;color:#edf3ff;margin-top:6px">${esc(p.body)}</p></div><div class="item" style="margin-top:8px"><span class="muted">你想达到的结果</span><p style="font-size:14px;color:#edf3ff;margin-top:6px">${esc(p.goal||'还没有填写结果。你可以稍后补充。')}</p></div>
+ <div class="progress-number" style="margin-top:16px">任务进度 <strong>${p.progress||0}%</strong></div><div class="progress-wrap"><div class="progress-bar" style="width:${p.progress||0}%"></div></div>
+ <div class="tabs"><button class="tab active" data-tab="steps">步骤与进度</button><button class="tab" data-tab="notes">心得记录</button><button class="tab" data-tab="history">时间线</button></div><div id="detailContent"></div>
+ <button class="secondary" id="editBtn" style="width:100%;margin-top:12px">编辑星球信息</button>
+ <div class="row"><button class="secondary" id="completeBtn" style="margin-top:10px;flex:1">${p.done?'恢复到宇宙':'标记为已完成'}</button><button class="secondary" id="pauseBtn" style="margin-top:10px;flex:1">${p.paused?'恢复到星空':'暂时搁置'}</button></div><button class="secondary danger" id="abandonBtn" style="margin-top:8px;width:100%">放弃 / 删除这个想法</button>`,'task');
+ $('x').onclick=closeSheet;
+ $('renameBtn').onclick=()=>{
+  const row=$('titleRow');
+  row.innerHTML=`<input id="renameInput" maxlength="18" value="${esc(p.title)}" style="flex:1;min-width:0"><button class="mini-btn" id="renameOk">确定</button><button class="mini-btn" id="renameNo">取消</button>`;
+  const inp=$('renameInput');inp.focus();inp.select();
+  const reopen=()=>{const t=document.querySelector('.tab.active');openDetail(p.id,t?t.dataset.tab:undefined)};
+  const ok=()=>{const v=inp.value.trim().replace(/星球$/,'').slice(0,18);if(!v){toast('名称不能为空');return}
+   if(v!==p.title){p.title=v;p.updated=new Date().toISOString();learnWord(v,p.body||'');save();render()}reopen()};
+  $('renameOk').onclick=ok;$('renameNo').onclick=reopen;inp.onkeydown=e=>{if(e.key==='Enter')ok();if(e.key==='Escape')reopen()};
+ };
+ const renderTab=tab=>{
+  document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
+  const c=$('detailContent');
+  if(tab==='steps')c.innerHTML=`<p class="muted">按顺序添加阶段。每一行都是一个阶段；不需要的阶段可以删除。勾选完成后，进度自动按阶段数计算。</p>
+   <div id="stepList" class="list" style="margin-top:12px">${renderStepItems(p)}</div>
+   <label>添加下一步</label><div class="row"><input id="newStepText" placeholder="例如：购买路由器"><button class="secondary" id="addStep" style="flex:0 0 auto">＋ 添加步骤</button></div>
+   <div class="muted" style="margin-top:10px">当前进度：${p.steps.filter(s=>s.done).length}/${p.steps.length||0} 步。${p.steps.length?'已自动计算进度。':'先添加第一步，再逐步添加后续阶段。'}</div>
+   <label>下一步最小行动</label><input id="nextAction" value="${esc(p.next||'')}" placeholder="例如：先询问两家供应商价格">
+   <label>目前卡在哪里（可选）</label><textarea id="blocker" style="min-height:68px" placeholder="例如：缺少成本数据，还不能判断是否值得做">${esc(p.blocker||'')}</textarea>
+   <button class="secondary" id="saveNextAction" style="width:100%;margin-top:10px">保存进展说明</button>`;
+  if(tab==='notes')c.innerHTML=`<p class="muted">心得是独立的写作空间，不需要在星球详情里挤着写。</p><button class="primary" id="openFullNotes">打开全屏个人心得</button><div class="section-title">我的心得</div><div class="list">${(p.notes||[]).map((n,i)=>({n,i})).slice(-3).reverse().map(({n,i})=>`<div class="item" data-note-i="${i}"><strong>${esc(n.date)}</strong><p style="white-space:pre-wrap">${esc(n.text)}</p></div>`).join('')||'<div class="muted">还没有记录。</div>'}</div>`;
+  if(tab==='history'){
+   const events=[{date:p.created||'',title:'创建星球',detail:p.body||''}];
+   (p.notes||[]).forEach(n=>events.push({date:n.iso||n.date||'',title:'个人心得',detail:n.text||''}));
+   (p.steps||[]).forEach(st=>events.push({date:st.updated||st.created||'',title:st.done?'步骤已完成':'添加步骤',detail:st.text||''}));
+   if(p.abandonedAt)events.push({date:p.abandonedAt,title:'放弃星球',detail:'星球被放入已删除记录'});
+   if(p.done)events.push({date:p.updated||'',title:'标记为已完成',detail:'当前星球已完成'});
+   c.innerHTML='<p class="muted">按时间回看这个念头如何开始、推进、改变或结束。</p><div class="list">'+events.sort((a,b)=>String(b.date).localeCompare(String(a.date))).map(e=>`<div class="item"><strong>${esc(e.title)}</strong><p>${esc(localStamp(e.date))}</p><p style="white-space:pre-wrap">${esc(e.detail)}</p></div>`).join('')+'</div>';
+  }
+
+  if(tab==='steps'){
+   $('addStep').onclick=()=>{
+    const input=$('newStepText'),text=input.value.trim();
+    if(!text){toast('先写下这一步要做什么');return}
+    p.steps.push({text,done:false,created:new Date().toISOString()});
+    p.updated=new Date().toISOString();updateProgress(p);save();renderTab('steps');refreshDetailProgress(p);render();toast(`已添加第 ${p.steps.length} 步`);
+   };
+   bindStepChecks(p);
+   $('saveNextAction').onclick=()=>{p.next=$('nextAction').value.trim();p.blocker=$('blocker').value.trim();p.updated=new Date().toISOString();save();toast('进展说明已保存');renderTab('steps')};
+  }
+  if(tab==='notes'){$('openFullNotes').onclick=()=>openNotesEditor(p);document.querySelectorAll('[data-note-i]').forEach(el=>el.onclick=()=>openNotesEditor(p,Number(el.dataset.noteI)))}
+ };
+ document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>renderTab(b.dataset.tab));renderTab(openTab||'steps');
+ $('completeBtn').onclick=()=>{const was=p.done;p.abandoned=false;p.updated=new Date().toISOString();
+  if(!was){p.done=true;p.autoDone=false;p.progress=100;p.status='已完成'}
+  else{p.done=false;p.autoDone=false;const t=p.steps.length,d=p.steps.filter(x=>x.done).length;p.progress=t?Math.round(d/t*100):0;p.status=p.kind||'灵感'}
+  save();closeSheet();render();toast(p.done?'已放入已完成记录':'已恢复到宇宙')};
+ $('pauseBtn').onclick=()=>{p.paused=!p.paused;p.updated=new Date().toISOString();save();closeSheet();render();toast(p.paused?'已暂时搁置':'已恢复到星空')};
+ $('abandonBtn').onclick=()=>{if(confirm('确定放弃这个星球？它会离开首页，但会保留在“已删除”记录中。')){p.abandoned=true;p.paused=false;p.done=false;p.status='已删除';p.abandonedAt=new Date().toISOString();p.updated=p.abandonedAt;save();closeSheet();render();toast('已放入已删除记录')}};
+ $('editBtn').onclick=()=>openEdit(p);
+}
+function renderStepItems(p){
+ if(!p.steps.length)return '<div class="muted">还没有步骤。点击下方「添加步骤」，逐步拆解这件事。</div>';
+ return p.steps.map((s,i)=>`<div class="item" style="display:flex;align-items:center;gap:10px;margin:0"><input type="checkbox" data-step="${i}" ${s.done?'checked':''} style="width:20px;height:20px;margin:0;flex-shrink:0;accent-color:#77baff"><span style="font-size:12px;color:#88a8e9;min-width:38px">第 ${i+1} 步</span><span style="flex:1;color:${s.done?'#8fa2ce':'#edf3ff'};font-size:14px;line-height:1.55;${s.done?'text-decoration:line-through':''}">${esc(s.text)}</span><button class="secondary danger" data-remove-step="${i}" style="padding:5px 8px;font-size:11px">删除</button></div>`).join('');
+}
+function updateProgress(p){
+ const total=p.steps.length,done=p.steps.filter(s=>s.done).length;p.updated=new Date().toISOString();
+ if(p.done&&!p.autoDone){p.progress=100;return}
+ p.progress=total?Math.round(done/total*100):0;
+ if(total&&p.progress===100){if(!p.done){p.done=true;p.autoDone=true;p.status='已完成'}}
+ else if(p.autoDone){p.done=false;p.autoDone=false;p.status=p.kind||'灵感'}
+}
+function refreshDetailProgress(p){
+ const num=$('sheet').querySelector('.progress-number');if(num)num.innerHTML=`任务进度 <strong>${p.progress||0}%</strong>`;
+ const bar=$('sheet').querySelector('.progress-bar');if(bar)bar.style.width=(p.progress||0)+'%';
+}
+function bindStepChecks(p){
+ document.querySelectorAll('[data-step]').forEach(input=>input.onchange=()=>{
+  const i=Number(input.dataset.step),was=p.done;if(p.steps[i])p.steps[i].done=input.checked;
+  p.updated=new Date().toISOString();updateProgress(p);save();renderTabStepsAfterCheck(p);render();
+  if(p.done&&!was){chime();toast('所有步骤已完成，这个星球将离开星空 ✦',{label:'撤销',fn:()=>{if(p.steps[i])p.steps[i].done=false;updateProgress(p);save();render();document.querySelector('.tab.active')?.click();refreshDetailProgress(p)}})}
+  else toast(`进度已更新：${p.progress}%`)
+ });
+ document.querySelectorAll('[data-remove-step]').forEach(btn=>btn.onclick=()=>{
+  const i=Number(btn.dataset.removeStep);if(!p.steps[i])return;
+  p.steps.splice(i,1);p.updated=new Date().toISOString();updateProgress(p);save();
+  const activeTab=document.querySelector('.tab.active')?.dataset.tab||'steps';
+  document.querySelector(`.tab[data-tab="${activeTab}"]`)?.click();render();toast('步骤已删除');
+ });
+}
+function renderTabStepsAfterCheck(p){
+ const c=$('detailContent');if(!c)return;
+ c.querySelectorAll('[data-step]').forEach(input=>{const i=Number(input.dataset.step);input.checked=!!p.steps[i]?.done;});
+ const old=c.querySelector('.muted:last-child');if(old)old.textContent=`当前进度按已完成步骤计算：${p.steps.filter(s=>s.done).length}/${p.steps.length} 步。`;
+ refreshDetailProgress(p);
+}
+function openEdit(p){
+ showSheet(`<div class="sheet-head"><h2>编辑星球</h2><button class="close" id="x">×</button></div><label>最初的想法</label><textarea id="editBody">${esc(p.body)}</textarea><label>你想达到什么结果？</label><textarea id="editGoal">${esc(p.goal||'')}</textarea><button class="primary" id="editSave">保存修改</button>`);
+ $('x').onclick=()=>openDetail(p.id);$('editSave').onclick=()=>{p.body=$('editBody').value.trim()||p.body;p.goal=$('editGoal').value.trim();p.updated=new Date().toISOString();save();closeSheet();render();toast('已保存修改')};
+}
+function showCompleted(){
+ const done=planets.filter(p=>p.done&&!p.abandoned);
+ showSheet(`<div class="sheet-head"><h2>已完成的星球</h2><button class="close" id="x">×</button></div>
+ <button class="secondary" id="backSettings" style="width:100%;margin-bottom:10px">← 返回系统设置</button><p class="muted">完成的事情会留在这里，提醒你曾经做到了什么。</p><div class="list">${done.map(p=>`<button class="item" data-done="${p.id}" style="text-align:left;color:inherit"><strong>✦ ${esc(p.title)}星</strong><p>${esc(p.goal||p.body)} · 100%</p></button>`).join('')||'<div class="muted">还没有完成记录。</div>'}</div>`);
+ $('x').onclick=closeSheet;
+ $('backSettings').onclick=settings;document.querySelectorAll('[data-done]').forEach(b=>b.onclick=()=>openDetail(b.dataset.done));
+}
+function showAbandoned(){
+ const items=planets.filter(p=>p.abandoned);
+ showSheet(`<div class="sheet-head"><h2>已删除的星球</h2><button class="close" id="x">×</button></div>
+ <button class="secondary" id="backSettings" style="width:100%;margin-bottom:10px">← 返回系统设置</button><p class="muted">这些想法曾经来过。你可以回顾当时的心得，也可以恢复星球。</p><div class="list">${items.map(p=>`<div class="item"><strong>☄ ${esc(p.title)}星</strong><p>${esc(p.goal||p.body)}</p><button class="secondary" data-open-deleted="${p.id}" style="margin-top:9px">查看心得与记录</button><button class="secondary" data-restore="${p.id}" style="margin-top:9px">恢复到宇宙</button></div>`).join('')||'<div class="muted">目前没有放弃的星球。</div>'}</div>`);
+ $('x').onclick=closeSheet;
+ $('backSettings').onclick=settings;document.querySelectorAll('[data-open-deleted]').forEach(b=>b.onclick=()=>openDetail(b.dataset.openDeleted));document.querySelectorAll('[data-restore]').forEach(b=>b.onclick=()=>{const p=planets.find(x=>x.id===b.dataset.restore);if(p){p.abandoned=false;p.done=false;p.paused=false;p.status='进行中';p.updated=new Date().toISOString();save();closeSheet();render();toast('已恢复到宇宙')}})
+}
+
+function mergeNotes(p){
+ const ns=(p.notes||[]).filter(n=>n&&String(n.text||'').trim());
+ if(ns.length<=1){p.notes=ns;return}
+ const text=ns.map(n=>(n.date?n.date+'\n':'')+n.text).join('\n\n— — —\n\n'),la=ns[ns.length-1];
+ p.notes=[{date:ns[0].date,iso:ns[0].iso,text,edited:la.edited||la.iso}]}
+function openNotesEditor(p){
+ p.notes=p.notes||[];mergeNotes(p);
+ const dk='star_mind_draft_'+p.id;let draft='';try{draft=localStorage.getItem(dk)||''}catch(e){}
+ showSheet(`<div class="note-top"><button class="secondary" id="noteBack">← 返回</button><div class="note-title">个人心得 · ${esc(p.title)}</div><button class="primary" id="saveFullNote">完成</button></div>
+ <div class="editor-toolbar"><button data-format="bullet">• 列表</button><button data-format="paragraph">分段</button><button id="undoText">↶ 撤回</button><button id="redoText">↷ 重做</button></div>
+ <textarea id="fullNote" class="note-area" placeholder="把此刻的想法、判断、过程和感受，安安静静地写下来……"></textarea><div class="note-foot" id="noteFoot"></div>`,'note');
+ const ta=$('fullNote');let undo=[],redo=[],tm=null,lastPush=0;
+ const cur=()=>p.notes[0];
+ let base=cur()?cur().text:'';
+ if(draft.trim()){base=base?base+'\n\n'+draft:draft;try{localStorage.removeItem(dk)}catch(e){}}
+ ta.value=base;let last=base;
+ const count=()=>{$('noteFoot').textContent=ta.value.replace(/\s/g,'').length+' 字 · 自动保存'+(cur()&&cur().edited?' · 最后编辑 '+localStamp(cur().edited):'')};
+ const btns=()=>{$('undoText').disabled=!undo.length;$('redoText').disabled=!redo.length};
+ const persist=()=>{clearTimeout(tm);const v=ta.value;
+  if(!v.trim()){if(cur()){p.notes=[];save()}count();return}
+  const iso=new Date().toISOString();
+  if(!cur())p.notes=[{date:localStamp(iso),iso,text:v}];
+  else if(cur().text!==v){cur().text=v;cur().edited=iso}
+  else{count();return}
+  p.updated=iso;save();count()};
+ ta.addEventListener('input',()=>{const t=Date.now();if(t-lastPush>700){undo.push(last);if(undo.length>100)undo.shift();redo=[];lastPush=t}
+  last=ta.value;count();btns();clearTimeout(tm);tm=setTimeout(persist,250)});
+ document.querySelectorAll('[data-format]').forEach(b=>b.onclick=()=>{const pos=ta.selectionStart,f=b.dataset.format,ins=f==='bullet'?'\n• ':'\n\n';ta.value=ta.value.slice(0,pos)+ins+ta.value.slice(ta.selectionEnd);ta.focus();ta.selectionStart=ta.selectionEnd=pos+ins.length;ta.dispatchEvent(new Event('input'))});
+ $('undoText').onclick=()=>{if(!undo.length)return;redo.push(ta.value);ta.value=undo.pop();last=ta.value;lastPush=0;persist();btns();ta.focus()};
+ $('redoText').onclick=()=>{if(!redo.length)return;undo.push(ta.value);ta.value=redo.pop();last=ta.value;lastPush=0;persist();btns();ta.focus()};
+ $('noteBack').onclick=()=>{persist();openDetail(p.id,'notes')};
+ $('saveFullNote').onclick=()=>{persist();openDetail(p.id,'notes');toast('心得已保存')};
+ persist();count();btns();
+}
+const dkey=d=>{const x=new Date(d);return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0')};
+function dueMs(t){if(!t||(!t.date&&!t.time))return null;const v=new Date((t.date||dkey(Date.now()))+'T'+(t.time||'09:00')).getTime();return Number.isFinite(v)?v:null}
+function askNotify(){try{if('Notification' in window&&Notification.permission==='default')Notification.requestPermission()}catch(e){}}
+function checkReminders(){const n=Date.now(),hit=[];
+ todos.forEach(t=>{if(t.done)return;const d=dueMs(t);if(d!=null&&d<=n&&!t.notified&&n-d<864e5*2){t.notified=true;hit.push(t)}});
+ if(!hit.length)return;save();
+ hit.forEach(t=>{try{if('Notification' in window&&Notification.permission==='granted')new Notification('待办提醒',{body:t.text})}catch(e){}});
+ chime();toast('⏰ '+hit.map(t=>t.text).join('；'),{label:'知道了',fn:()=>{},sticky:true})}
+function todoIcs(t){const d=dueMs(t);if(d==null){toast('这条待办没有设置时间');return}
+ const p2=n=>String(n).padStart(2,'0'),f=ms=>{const x=new Date(ms);return x.getFullYear()+p2(x.getMonth()+1)+p2(x.getDate())+'T'+p2(x.getHours())+p2(x.getMinutes())+'00'};
+ const e=s=>String(s).replace(/[\\;,]/g,m=>'\\'+m).replace(/\n/g,'\\n');
+ const ics=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//StarMind//CN','BEGIN:VEVENT','UID:'+t.id+'@starmind','DTSTAMP:'+new Date().toISOString().replace(/[-:]/g,'').slice(0,15)+'Z','DTSTART:'+f(d),'DTEND:'+f(d+30*60000),'SUMMARY:'+e(t.text),'BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:'+e(t.text),'TRIGGER:PT0S','END:VALARM','END:VEVENT','END:VCALENDAR'].join('\r\n');
+ const a=document.createElement('a');a.href='data:text/calendar;charset=utf-8,'+encodeURIComponent(ics);a.download='待办提醒.ics';document.body.appendChild(a);a.click();a.remove();
+ toast('已生成日历文件，打开后选“添加到日历”')}
+function openTodos(fromSettings){
+ const tk=dkey(Date.now()),tm=dkey(Date.now()+864e5);
+ const open=todos.filter(t=>!t.done),done=todos.filter(t=>t.done);
+ const g={over:[],today:[],tom:[],later:[],none:[]};
+ open.forEach(t=>{const d=t.date;if(!d)g.none.push(t);else if(d<tk)g.over.push(t);else if(d===tk)g.today.push(t);else if(d===tm)g.tom.push(t);else g.later.push(t)});
+ const byT=(a,b)=>((a.date||'')+(a.time||'')).localeCompare((b.date||'')+(b.time||''));
+ const lab=t=>{if(!t.date&&!t.time)return '';const q=[];if(t.date&&t.date!==tk)q.push(t.date.slice(5).replace('-','/'));if(t.time)q.push(t.time);else if(t.date)q.push('当天 9:00');return q.join(' ')};
+ const line=t=>`<div class="todo-line"><input type="checkbox" data-todo-done="${t.id}"><span style="flex:1"><span>${esc(t.text)}</span>${lab(t)?`<small class="muted" style="display:block">${esc(lab(t))}</small>`:''}</span>${(t.date||t.time)?`<button class="mini-btn" data-todo-ics="${t.id}" title="加入手机日历提醒">⏰</button>`:''}<button class="mini-btn" data-todo-del="${t.id}">×</button></div>`;
+ const sec=(title,arr,color)=>arr.length?`<div class="section-title"${color?` style="color:${color}"`:''}>${title} · ${arr.length}</div>`+arr.slice().sort(byT).map(line).join(''):'';
+ showSheet(`<div class="sheet-head"><h2>待办</h2><button class="close" id="todoClose">×</button></div>
+ ${fromSettings===true?'<button class="secondary" id="backSettings" style="width:100%;margin-bottom:10px">← 返回系统设置</button>':''}
+ <div class="row" style="align-items:stretch"><input id="todoText" placeholder="记一件小事，回车保存" style="flex:1 1 auto"><button class="secondary" id="todoAdd" style="flex:0 0 52px;font-size:22px;padding:0">＋</button></div>
+ <button class="mini-btn" id="todoRemind" style="margin-top:8px">⏰ 设置提醒（可选）</button>
+ <div id="remindBox" style="display:none;margin-top:8px"><div class="row"><input id="todoDate" type="date"><input id="todoTime" type="time"></div><div class="muted" style="margin-top:6px">只填时间 = 今天；只填日期 = 当天早上 9 点。</div></div>
+ ${sec('已逾期',g.over,'#ffb4a8')}${sec('今天',g.today)}${sec('明天',g.tom)}${sec('以后',g.later)}${sec('没设日期',g.none)}
+ ${open.length?'':'<div class="muted" style="margin-top:16px">现在没有待办。想到小事，随手记下。</div>'}
+ ${done.length?`<details style="margin-top:16px"><summary class="muted">已办事项 ${done.length}</summary>${done.slice().reverse().map(t=>`<div class="todo-line done"><span style="flex:1"><span>${esc(t.text)}</span></span><button class="mini-btn" data-todo-undo="${t.id}">恢复</button><button class="mini-btn" data-todo-del="${t.id}">×</button></div>`).join('')}</details>`:''}`,'tall');
+ $('todoClose').onclick=closeSheet;
+ if($('backSettings'))$('backSettings').onclick=settings;
+ const add=()=>{const text=$('todoText').value.trim();if(!text){toast('先写下要记住的事情');return}
+  let date=$('todoDate').value,time=$('todoTime').value;if(time&&!date)date=tk;
+  todos.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,5),text,date:date||'',time:time||'',done:false,created:new Date().toISOString()});
+  save();if(date||time)askNotify();closeSheet();toast(date||time?'已记下，页面打开时到点会提醒':'已记下')};
+ $('todoAdd').onclick=add;$('todoText').onkeydown=e=>{if(e.key==='Enter')add()};
+ $('todoRemind').onclick=()=>{const b=$('remindBox');b.style.display=b.style.display==='none'?'block':'none'};
+ document.querySelectorAll('[data-todo-done]').forEach(el=>el.onchange=()=>{const t=todos.find(x=>x.id===el.dataset.todoDone);if(t){t.done=el.checked;t.doneAt=new Date().toISOString();save();openTodos(fromSettings)}});
+ document.querySelectorAll('[data-todo-undo]').forEach(el=>el.onclick=()=>{const t=todos.find(x=>x.id===el.dataset.todoUndo);if(t){t.done=false;t.notified=false;save();openTodos(fromSettings)}});
+ document.querySelectorAll('[data-todo-del]').forEach(el=>el.onclick=()=>{todos=todos.filter(x=>x.id!==el.dataset.todoDel);save();openTodos(fromSettings)});
+ document.querySelectorAll('[data-todo-ics]').forEach(el=>el.onclick=()=>{const t=todos.find(x=>x.id===el.dataset.todoIcs);if(t)todoIcs(t)});
+}
+function searchPlanets(){
+ showSheet(`<div class="sheet-head"><h2>查找星球</h2><button class="close" id="x">×</button></div>
+ <button class="secondary" id="backSettings" style="width:100%;margin-bottom:10px">← 返回系统设置</button>
+ <label>选择已有星球</label><select id="planetPicker"><option value="">请选择一个星球……</option>${planets.slice().sort((a,b)=>String(a.title).localeCompare(String(b.title),'zh')).map(p=>`<option value="${esc(p.id)}">${esc(p.title)}星 · ${p.abandoned?'已删除':p.done?'已完成':p.paused?'暂时搁置':'星空中'}</option>`).join('')}</select>
+ <button class="primary" id="openPicked" style="margin-top:10px">打开选中的星球</button>
+ <label>或输入关键词筛选</label><input id="planetSearch" placeholder="可选：机油、短视频、中国市场">
+ <label>状态筛选</label><select id="planetFilter"><option value="all">全部星球</option><option value="active">星空中</option><option value="done">已完成</option><option value="deleted">已删除</option><option value="paused">暂时搁置</option></select>
+ <label>排序方式</label><select id="planetSort"><option value="updated">最近更新</option><option value="created">创建时间</option><option value="name">名称</option><option value="progress">任务进度</option></select><div id="searchResults" class="list" style="margin-top:12px"></div>`);
+ $('x').onclick=closeSheet;$('backSettings').onclick=settings;
+ $('openPicked').onclick=()=>{const id=$('planetPicker').value;if(!id){toast('请先选择一个星球');return}openDetail(id)};
+ const input=$('planetSearch'),results=$('searchResults'),filter=$('planetFilter'),sort=$('planetSort');
+ const run=()=>{const q=input.value.trim().toLowerCase();let arr=planets.filter(p=>!q||`${p.title} ${p.body||''} ${p.goal||''} ${p.next||''} ${p.blocker||''}`.toLowerCase().includes(q));
+ arr=arr.filter(p=>filter.value==='all'||(filter.value==='active'&&!p.done&&!p.abandoned&&!p.paused)||(filter.value==='done'&&p.done&&!p.abandoned)||(filter.value==='deleted'&&p.abandoned)||(filter.value==='paused'&&p.paused&&!p.abandoned&&!p.done));
+ arr.sort((a,b)=>sort.value==='name'?String(a.title).localeCompare(String(b.title),'zh'):sort.value==='progress'?(b.progress||0)-(a.progress||0):sort.value==='created'?String(b.created||'').localeCompare(String(a.created||'')):String(b.updated||b.created||'').localeCompare(String(a.updated||a.created||'')));
+ results.innerHTML=arr.map(p=>`<button class="item" data-search-open="${p.id}" style="text-align:left;color:inherit"><strong>${esc(p.title)}星</strong><p>${esc(p.abandoned?'已删除':p.done?'已完成':p.paused?'暂时搁置':'星空中')} · ${esc((p.goal||p.body||'').slice(0,70))}</p></button>`).join('')||'<div class="muted">没有找到匹配的星球。</div>';
+ document.querySelectorAll('[data-search-open]').forEach(b=>b.onclick=()=>openDetail(b.dataset.searchOpen));
+ };
+ input.oninput=run;filter.onchange=run;sort.onchange=run;run();
+}
+function settings(){
+ showSheet(`<div class="sheet-head"><h2>宇宙设置</h2><button class="close" id="x">×</button></div>
+ <div class="item"><strong>数据保存方式</strong><p>自动保存在当前浏览器中。仅本机保存，不会自动同步到其他设备。建议定期导出备份。</p><p>上次备份：${lastBackup?esc(localStamp(lastBackup)):'尚未备份'}</p></div>
+ <div class="section-title">查找与管理</div><button class="secondary" id="searchPlanets" style="width:100%">搜索星球</button><button class="secondary" id="settingsTodos" style="width:100%;margin-top:8px">待办与已办事项</button><button class="secondary" id="settingsCompleted" style="width:100%;margin-top:8px">已完成星球</button><button class="secondary" id="settingsDeleted" style="width:100%;margin-top:8px">已删除 / 已放弃星球</button><button class="secondary" id="settingsPaused" style="width:100%;margin-top:8px">暂时搁置的星球</button>
+ <div class="section-title">星空体验</div><div class="row"><button class="secondary" id="soundToggle">音效：${localStorage.getItem('star_mind_sound')==='off'?'关闭':'开启'}</button><button class="secondary" id="motionToggle">碰撞效果：${localStorage.getItem('star_mind_collision')==='off'?'关闭':'开启'}</button></div><div class="row" style="margin-top:8px"><button class="secondary" id="ambientToggle">背景音乐：${musicOn()?'开启':'关闭'}</button><button class="secondary" id="meteorToggle">流星：${localStorage.getItem('star_mind_meteor')==='off'?'关闭':'开启'}</button></div><div class="row" style="margin-top:8px"><button class="secondary" id="spinToggle">星空自转：${localStorage.getItem('star_mind_spin')==='off'?'关闭':'开启'}</button></div><div class="row" style="margin-top:8px"><button class="secondary" id="testSound">试听一下声音</button></div><div class="muted soft" id="audioState" style="margin-top:6px">${audioStateText()}</div><div class="section-title">星空背景</div><select class="theme-select" id="themeSelect">${themeOptions()}</select><div class="section-title">手动放大缩小后，多久自动恢复</div><select class="theme-select" id="holdSelect">${holdOptions()}</select>
+ <div class="section-title">数据备份</div><button class="secondary" id="export" style="width:100%">导出完整备份文件</button><label>从备份恢复</label><input id="importFile" type="file" accept="application/json"><button class="secondary danger" id="reset" style="width:100%;margin-top:16px">清空全部数据</button>`);
+ $('x').onclick=closeSheet;
+ $('searchPlanets').onclick=searchPlanets;$('settingsTodos').onclick=()=>openTodos(true);$('settingsCompleted').onclick=showCompleted;$('settingsDeleted').onclick=showAbandoned;$('settingsPaused').onclick=showPaused;
+ $('soundToggle').onclick=()=>{const off=localStorage.getItem('star_mind_sound')!=='off';localStorage.setItem('star_mind_sound',off?'off':'on');settings()};
+ $('motionToggle').onclick=()=>{const off=localStorage.getItem('star_mind_collision')!=='off';localStorage.setItem('star_mind_collision',off?'off':'on');settings()};
+ $('ambientToggle').onclick=()=>{const on=!musicOn();localStorage.setItem('star_mind_ambient',on?'on':'off');if(on){unlockAudio();if(AC&&AC.state==='running')ambient(true);else startAmbWav()}else ambient(false);settings()};
+ $('themeSelect').onchange=e=>{localStorage.setItem('star_mind_theme',e.target.value);applyTheme()};
+ $('holdSelect').onchange=e=>localStorage.setItem('star_mind_scale_hold',e.target.value);
+ $('meteorToggle').onclick=()=>{const off=localStorage.getItem('star_mind_meteor')!=='off';localStorage.setItem('star_mind_meteor',off?'off':'on');settings()};
+ $('spinToggle').onclick=()=>{const off=localStorage.getItem('star_mind_spin')!=='off';localStorage.setItem('star_mind_spin',off?'off':'on');settings()};
+ $('testSound').onclick=()=>{unlockAudio();chime();setTimeout(()=>{if(AC&&AC.state==='running')chime();const el=$('audioState');if(el)el.textContent=audioStateText()},500)};
+ $('export').onclick=()=>{const now=new Date().toISOString();const blob=new Blob([JSON.stringify({version:10,exportedAt:now,planets,links,todos},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='星念宇宙_备份_'+now.slice(0,10)+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);lastBackup=now;localStorage.setItem('star_mind_last_backup',lastBackup);toast('备份已导出');settings()};
+ $('importFile').onchange=async e=>{try{const file=e.target.files[0];if(!file)return;const data=JSON.parse(await file.text());if(!data||!Array.isArray(data.planets)||!Array.isArray(data.links))throw new Error('invalid backup');
+ if(data.planets.some(p=>!p||typeof p.id!=='string'||typeof p.title!=='string'))throw new Error('invalid planet data');
+ const old={planets,links,todos};
+ planets=data.planets.map(p=>({...p,steps:Array.isArray(p.steps)?p.steps:[],notes:Array.isArray(p.notes)?p.notes:[],paused:!!p.paused,blocker:p.blocker||''}));
+ links=data.links.filter(l=>l&&typeof l.a==='string'&&typeof l.b==='string'&&planets.some(p=>p.id===l.a)&&planets.some(p=>p.id===l.b));
+ todos=Array.isArray(data.todos)?data.todos.filter(t=>t&&typeof t.text==='string').map(t=>({...t,done:!!t.done})):[];
+ if(!save()){planets=old.planets;links=old.links;todos=old.todos;save();throw new Error('storage failed')}
+ closeSheet();render();toast('恢复成功')}catch(err){toast('备份文件格式不正确')}};
+ $('reset').onclick=()=>{if(confirm('确定清空全部星球、待办和记录？请先导出备份。')){planets=[];links=[];todos=[];save();closeSheet();render()}};
+}
+function showPaused(){
+ const items=planets.filter(p=>p.paused&&!p.done&&!p.abandoned);
+ showSheet(`<div class="sheet-head"><h2>暂时搁置</h2><button class="close" id="x">×</button></div>
+ <button class="secondary" id="backSettings" style="width:100%;margin-bottom:10px">← 返回系统设置</button><p class="muted">先把它们从主星空移开，需要时可以恢复。</p><div class="list">${items.map(p=>`<div class="item"><strong>◌ ${esc(p.title)}星</strong><p>${esc(p.goal||p.body||'')}</p><button class="secondary" data-resume="${p.id}" style="margin-top:8px">恢复到星空</button></div>`).join('')||'<div class="muted">没有搁置的星球。</div>'}</div>`);
+ $('x').onclick=closeSheet;
+ $('backSettings').onclick=settings;document.querySelectorAll('[data-resume]').forEach(b=>b.onclick=()=>{const p=planets.find(x=>x.id===b.dataset.resume);if(p){p.paused=false;save();closeSheet();render()}});
+}
+window.addEventListener('resize',()=>render());
+const canvas=$('stars'),ctx=canvas.getContext('2d');let starData=[],TH=null;
+let starFrame=0,starLast=0,starBase=null,starSprites=null,starDirty=true,meteor=null,nextMeteor=0,skyD=0;
+const THEMES=[
+ {id:'deep',name:'深蓝宇宙',sw:'#1b3a82',bg:'radial-gradient(ellipse at 50% 44%,#10265a 0%,#08163b 38%,#050d2b 76%,#020719 100%)',ov:'none',s:'171,204,255',b:'222,238,255',g1:'#6faeff',g2:'#c5e4ff'},
+ {id:'aurora',name:'极光之夜',sw:'#1fbf9a',bg:'linear-gradient(180deg,#020d16 0%,#04202a 55%,#052a25 100%)',ov:'radial-gradient(ellipse at 25% 28%,rgba(44,255,176,.28),transparent 55%),radial-gradient(ellipse at 75% 22%,rgba(122,92,255,.26),transparent 55%),radial-gradient(ellipse at 55% 45%,rgba(60,200,255,.16),transparent 60%)',s:'190,255,235',b:'235,255,250',g1:'#4de8c0',g2:'#d5fff3'},
+ {id:'nebula',name:'紫色星云',sw:'#8b3fd1',bg:'radial-gradient(ellipse at 32% 30%,#3b1160 0%,#1d0b3c 45%,#0b0622 78%,#04020f 100%)',ov:'radial-gradient(ellipse at 70% 65%,rgba(255,92,200,.22),transparent 55%),radial-gradient(ellipse at 25% 20%,rgba(140,90,255,.25),transparent 55%)',s:'230,200,255',b:'255,235,250',g1:'#c18bff',g2:'#ffd7f2'},
+ {id:'ocean',name:'深海微光',sw:'#0a7f9a',bg:'radial-gradient(ellipse at 50% 18%,#06475f 0%,#042b42 45%,#021725 80%,#010a12 100%)',ov:'radial-gradient(ellipse at 50% 0%,rgba(90,220,255,.2),transparent 55%),radial-gradient(ellipse at 20% 80%,rgba(40,160,200,.14),transparent 55%)',s:'175,235,245',b:'225,250,255',g1:'#4fd0e8',g2:'#d3f6ff'},
+ {id:'dusk',name:'暮光余烬',sw:'#d4682f',bg:'radial-gradient(ellipse at 50% 100%,#5b2a18 0%,#2b1122 48%,#10081a 80%,#07040d 100%)',ov:'radial-gradient(ellipse at 50% 100%,rgba(255,140,70,.22),transparent 55%),radial-gradient(ellipse at 15% 25%,rgba(200,80,140,.14),transparent 55%)',s:'255,215,185',b:'255,240,225',g1:'#ff9a62',g2:'#ffe4c9'}
+];
+const themeId=()=>localStorage.getItem('star_mind_theme')||'deep';
+function curTheme(){const id=themeId();if(id==='auto'){const d=Math.floor((Date.now()-new Date().getTimezoneOffset()*6e4)/864e5);return THEMES[d%THEMES.length]}return THEMES.find(t=>t.id===id)||THEMES[0]}
+function applyTheme(){TH=curTheme();starDirty=true;const a=$('app');a.style.background=TH.bg;a.style.setProperty('--ov',TH.ov)}
+const holdSec=()=>Number(localStorage.getItem('star_mind_scale_hold'))||15;
+function holdOptions(){return [10,15,30].map(v=>`<option value="${v}"${holdSec()===v?' selected':''}>${v} 秒</option>`).join('')}
+function scaleRecover(){const hold=holdSec()*1000,now=Date.now();
+ allActive().forEach(p=>{const sc=Number(p.scale)||1;if(sc===1)return;
+  if(now-(p.scaleAt||0)<hold)return;
+  let n=sc+(1-sc)*.08;if(Math.abs(n-1)<.015)n=1;p.scale=n;
+  const el=document.querySelector(`.planet[data-pid="${p.id}"]`),cc=el&&el.querySelector('.planet-core');
+  if(cc)cc.style.width=cc.style.height=coreSize(p)+'px';
+  if(n===1){delete p.scaleAt;save()}})}
+function themeOptions(){return THEMES.map(t=>`<option value="${t.id}"${themeId()===t.id?' selected':''}>${t.name}</option>`).join('')+`<option value="auto"${themeId()==='auto'?' selected':''}>每日轮换（每天换一个）</option>`}
+const hexRgb=h=>{h=h.replace('#','');return parseInt(h.slice(0,2),16)+','+parseInt(h.slice(2,4),16)+','+parseInt(h.slice(4,6),16)};
+function makeSprite(body,glow,size){const c=document.createElement('canvas');c.width=c.height=size;const g=c.getContext('2d'),r=size/2,gr=g.createRadialGradient(r,r,0,r,r,r);
+ gr.addColorStop(0,`rgba(${body},1)`);gr.addColorStop(.14,`rgba(${body},.95)`);gr.addColorStop(.32,`rgba(${glow},.38)`);gr.addColorStop(1,`rgba(${glow},0)`);
+ g.fillStyle=gr;g.fillRect(0,0,size,size);return c}
+function makeSprites(T){return{s:makeSprite(T.s,hexRgb(T.g1),64),b:makeSprite(T.b,hexRgb(T.g2),64)}}
+const SPIN=0.15*Math.PI/180;
+function rng(seed){return()=>{seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function skyAngle(){if(localStorage.getItem('star_mind_spin')==='off'||matchMedia('(prefers-reduced-motion:reduce)').matches)return 0;return(Date.now()/1000*SPIN)%(Math.PI*2)}
+function starfield(){
+ const dpr=Math.min(devicePixelRatio||1,2),w=innerWidth,h=innerHeight;
+ canvas.width=w*dpr;canvas.height=h*dpr;canvas.style.width=w+'px';canvas.style.height=h+'px';
+ ctx.setTransform(dpr,0,0,dpr,0,0);
+ skyD=Math.ceil(Math.hypot(w,h))+4;
+ const k=skyD*skyD/(w*h),r=rng(20261025),n=Math.round(230*k),nt=Math.round(32*k);
+ starData=Array.from({length:n},(_,i)=>({x:r()*skyD,y:r()*skyD,r:r()*1.7+.25,a:r()*.72+.12,phase:r()*6.28,speed:.45+r()*1.7,bright:r()>.9,tw:i<nt}));
+ starDirty=true;
+ if(!starFrame)starFrame=requestAnimationFrame(drawStarfield);
+}
+function buildStarBase(){
+ const D=skyD,T=TH||THEMES[0],sc=Math.min(Math.min(devicePixelRatio||1,2),2800/D);
+ starBase=document.createElement('canvas');starBase.width=Math.round(D*sc);starBase.height=Math.round(D*sc);
+ const g=starBase.getContext('2d');g.setTransform(sc,0,0,sc,0,0);
+ starSprites=makeSprites(T);
+ starData.forEach(st=>{if(st.tw)return;
+  const alpha=Math.min(1,st.a*.725*(st.bright?1.7:1)),sz=st.r*(st.bright?9:7);
+  g.globalAlpha=alpha;g.drawImage(st.bright?starSprites.b:starSprites.s,st.x-sz/2,st.y-sz/2,sz,sz);
+  if(st.bright){g.globalAlpha=alpha*.5;g.strokeStyle=`rgb(${T.b})`;g.lineWidth=.6;g.beginPath();g.moveTo(st.x-st.r*3,st.y);g.lineTo(st.x+st.r*3,st.y);g.moveTo(st.x,st.y-st.r*3);g.lineTo(st.x,st.y+st.r*3);g.stroke()}});
+ g.globalAlpha=1;starDirty=false}
+function spawnMeteor(ts){
+ const w=innerWidth,h=innerHeight,bright=Math.random()<.18,dir=Math.random()<.5?-1:1,ang=(20+Math.random()*30)*Math.PI/180,sp=bright?650:850+Math.random()*350;
+ meteor={x:dir<0?w*(.35+Math.random()*.65):w*Math.random()*.65,y:Math.random()*h*.4,vx:dir*Math.cos(ang)*sp,vy:Math.sin(ang)*sp,len:bright?230:110+Math.random()*80,w:bright?2.4:1.5,start:ts,life:bright?1500:900+Math.random()*500,bright};
+ nextMeteor=ts+20000+Math.random()*30000}
+function drawMeteor(ts,T){
+ const m=meteor,t=(ts-m.start)/m.life;if(t>=1){meteor=null;return}
+ const k=(ts-m.start)/1000,hx=m.x+m.vx*k,hy=m.y+m.vy*k,sp=Math.hypot(m.vx,m.vy),tx=hx-m.vx/sp*m.len,ty=hy-m.vy/sp*m.len;
+ if(hx<-60||hx>innerWidth+60||hy>innerHeight+60){meteor=null;return}
+ const a=Math.min(1,t*8,(1-t)*3),g=ctx.createLinearGradient(hx,hy,tx,ty);
+ g.addColorStop(0,`rgba(255,255,255,${a})`);g.addColorStop(.25,`rgba(${T.b},${a*.55})`);g.addColorStop(1,`rgba(${T.b},0)`);
+ ctx.globalAlpha=1;ctx.strokeStyle=g;ctx.lineWidth=m.w;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(hx,hy);ctx.lineTo(tx,ty);ctx.stroke();
+ const hs=m.bright?18:11;ctx.globalAlpha=a;ctx.drawImage(starSprites.b,hx-hs/2,hy-hs/2,hs,hs);ctx.globalAlpha=1}
+function drawStarfield(ts){
+ starFrame=requestAnimationFrame(drawStarfield);
+ if(document.hidden)return;
+ const covered=$('overlay').classList.contains('show');
+ if(covered)meteor=null;
+ if(!nextMeteor)nextMeteor=ts+8000;
+ if(!meteor&&ts>=nextMeteor){
+  if(covered||starDirty||localStorage.getItem('star_mind_meteor')==='off'||matchMedia('(prefers-reduced-motion:reduce)').matches)nextMeteor=ts+5000+Math.random()*10000;
+  else spawnMeteor(ts)}
+ if(!starDirty&&(covered||ts-starLast<(meteor?16:80)))return;
+ if(starDirty||!starBase)buildStarBase();
+ starLast=ts;
+ const w=innerWidth,h=innerHeight,D=skyD,T=TH||THEMES[0],ang=skyAngle(),cs=Math.cos(ang),sn=Math.sin(ang);
+ const still=matchMedia('(prefers-reduced-motion:reduce)').matches;
+ ctx.clearRect(0,0,w,h);
+ ctx.save();ctx.translate(w/2,h/2);ctx.rotate(ang);
+ ctx.drawImage(starBase,-D/2,-D/2,D,D);
+ starData.forEach(st=>{if(!st.tw)return;
+  const dx=st.x-D/2,dy=st.y-D/2,sx=w/2+dx*cs-dy*sn,sy=h/2+dx*sn+dy*cs;
+  if(sx<-30||sx>w+30||sy<-30||sy>h+30)return;
+  const twinkle=still?.725:.45+.55*(.5+.5*Math.sin(ts*.001*st.speed+st.phase));
+  const alpha=Math.min(1,st.a*twinkle*(st.bright?1.7:1)),sz=st.r*(st.bright?9:7);
+  ctx.globalAlpha=alpha;ctx.drawImage(st.bright?starSprites.b:starSprites.s,dx-sz/2,dy-sz/2,sz,sz);
+  if(st.bright&&twinkle>.8){ctx.globalAlpha=alpha*.65;ctx.strokeStyle=`rgb(${T.b})`;ctx.lineWidth=.6;ctx.beginPath();ctx.moveTo(dx-st.r*3,dy);ctx.lineTo(dx+st.r*3,dy);ctx.moveTo(dx,dy-st.r*3);ctx.lineTo(dx,dy+st.r*3);ctx.stroke()}});
+ ctx.restore();ctx.globalAlpha=1;
+ if(meteor)drawMeteor(ts,T)}
+const dscale=p=>.55+.6*Math.max(0,Math.min(1,Number(p.depth)||.6));
+function pickColor(){const use=new Array(colors.length).fill(0);planets.forEach(p=>{const c=Number(p&&p.color);if(Number.isInteger(c)&&c>=0&&c<colors.length)use[c]++});const m=Math.min(...use),c=use.map((n,i)=>n===m?i:-1).filter(i=>i>=0);return c[Math.floor(Math.random()*c.length)]}
+function pickDepth(){const L=[.25,.45,.65,.85,1],use=L.map(()=>0);planets.forEach(p=>{const z=Number(p&&p.depth);if(Number.isFinite(z)){let k=0;L.forEach((v,i)=>{if(Math.abs(v-z)<Math.abs(L[k]-z))k=i});use[k]++}});const m=Math.min(...use),c=use.map((n,i)=>n===m?i:-1).filter(i=>i>=0);return +(L[c[Math.floor(Math.random()*c.length)]]+(Math.random()-.5)*.1).toFixed(2)}
+
+/* ---- SOUND SYSTEM IMPROVED ---- */
+let AC=null,amb=null,ambEl=null,ambTimer=null,spkTimer=null,chordI=0,lastBump=0,lastTick=0,lastGesture=-1e9,booted=false,wavCache={};
+const NOTES=[392,440,523.25,587.33,659.25,783.99,880,987.77,1046.5,1174.66];
+const CHORDS=[[73.42,110,146.83,185,220],[98,146.83,196,246.94,293.66],[61.74,92.5,123.47,146.83,220],[55,82.41,110,138.59,164.81]];
+const SPK=[587.33,659.25,739.99,880,987.77,1108.73,1318.51];
+const soundOn=()=>localStorage.getItem('star_mind_sound')!=='off';
+const musicOn=()=>localStorage.getItem('star_mind_ambient')!=='off';
+
+function ac(){
+ try{
+  if(!AC){
+   const A=window.AudioContext||window.webkitAudioContext;
+   if(!A)return null;
+   AC=new A();
+   AC.onstatechange=()=>{if(AC&&AC.state==='running'&&musicOn())ambient(true)}
+  }
+  if(AC.state!=='running')AC.resume();
+  return AC;
+ }catch(e){return null}
+}
+
+function unlockAudio(){
+ if(!booted){booted=true;try{if(navigator.audioSession)navigator.audioSession.type='playback'}catch(e){}}
+ const c=ac();if(!c)return;
+ if(c.state==='running')return;
+ try{const b=c.createBuffer(1,1,22050),src=c.createBufferSource();src.buffer=b;src.connect(c.destination);src.start(0)}catch(e){}
+}
+
+function onGesture(){
+ lastGesture=performance.now();
+ unlockAudio();
+ const noWA=!(window.AudioContext||window.webkitAudioContext);
+ if(musicOn()&&!amb&&!ambEl&&(noWA||(AC&&AC.state!=='running'))) startAmbWav();
+}
+['touchend','click','pointerup','keydown'].forEach(ev=>document.addEventListener(ev,onGesture,{capture:true,passive:true}));
+
+function wavUrl(d,rate){const n=d.length,buf=new ArrayBuffer(44+n*2),v=new DataView(buf),w=(o,t)=>{for(let i=0;i<t.length;i++)v.setUint8(o+i,t.charCodeAt(i))};
+ w(0,'RIFF');v.setUint32(4,36+n*2,true);w(8,'WAVE');w(12,'fmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);v.setUint32(24,rate,true);v.setUint32(28,rate*2,true);v.setUint16(32,2,true);v.setUint16(34,16,true);w(36,'data');v.setUint32(40,n*2,true);
+ for(let i=0;i<n;i++)v.setInt16(44+i*2,Math.max(-1,Math.min(1,d[i]))*32767,true);
+ return URL.createObjectURL(new Blob([buf],{type:'audio/wav'}))}
+function beepWav(kind){if(wavCache[kind])return wavCache[kind];
+ const R=22050,dur=kind==='tick'?.09:kind==='sweep'?.25:.9,n=Math.round(R*dur),d=new Float32Array(n),W=2*Math.PI;
+ const add=(f0,f1,t0,len,vol,k)=>{for(let i=Math.round(t0*R);i<Math.min(n,Math.round((t0+len)*R));i++){const t=i/R-t0,f=f0+(f1-f0)*Math.min(1,t/.07);d[i]+=vol*Math.sin(W*f*t)*Math.exp(-t*k)*Math.min(1,t*400)}};
+ if(kind==='tick')add(1250,1250,0,.09,.5,60);else if(kind==='sweep')add(660,880,0,.25,.5,12);else{add(660,660,0,.9,.4,7);add(880,880,.18,.72,.4,7)}
+ return wavCache[kind]=wavUrl(d,R)}
+function fbBeep(kind){try{const a=new Audio(beepWav(kind));a.play().catch(()=>{})}catch(e){}}
+function ambWav(){
+ const R=22050,L=32,n=R*L,d=new Float32Array(n),q=f=>Math.round(f*L)/L,W=2*Math.PI;
+ const chord=[110,146.83,185,220,293.66].map(q),amps=[.3,.26,.2,.16,.12];
+ chord.forEach((f,i)=>{const f2=q(f*1.004);for(let k=0;k<n;k++){const t=k/R;d[k]+=amps[i]*(Math.sin(W*f*t)+.6*Math.sin(W*f2*t+i))*(.75+.25*Math.sin(W*(t/16)+i))}});
+ [[3,5],[9.5,6],[15,3],[21.5,4],[27,2]].forEach(([t0,idx])=>{const f=q(SPK[idx]),len=R*5;for(let j=0;j<len;j++){const t=j/R,env=Math.min(1,t*30)*Math.exp(-t*1.1),k=(Math.round(t0*R)+j)%n;d[k]+=.09*env*Math.sin(W*f*t)}});
+ let mx=0;for(let k=0;k<n;k++)mx=Math.max(mx,Math.abs(d[k]));const g=.3/mx;for(let k=0;k<n;k++)d[k]*=g;
+ return wavUrl(d,R)}
+function startAmbWav(){if(ambEl||amb)return;try{ambEl=new Audio(ambWav());ambEl.loop=true;ambEl.volume=.5;ambEl.play().catch(()=>{ambEl=null})}catch(e){ambEl=null}}
+
+function ui(kind){
+ if(!soundOn())return;
+ const c=ac();
+ if(c){
+  if(c.state!=='running') c.resume();
+  if(kind==='tick')tone(1250,.04,.07);
+  else if(kind==='sweep')webSweep();
+  else{tone(660,.1,.5);setTimeout(()=>tone(880,.1,.6),180)}
+ }else{
+  if(performance.now()-lastGesture<1500)fbBeep(kind);
+ }
+}
+
+function tone(f,v,dur,type){
+ const c=AC;if(!c)return;
+ try{
+  const o=c.createOscillator(),g=c.createGain();
+  o.type=type||'sine';o.frequency.value=f;
+  g.gain.setValueAtTime(0,c.currentTime);
+  g.gain.linearRampToValueAtTime(v,c.currentTime+.01);
+  g.gain.exponentialRampToValueAtTime(.0005,c.currentTime+dur);
+  o.connect(g);g.connect(c.destination);
+  o.start();o.stop(c.currentTime+dur+.02);
+ }catch(e){}
+}
+function webSweep(){
+ const c=AC;if(!c)return;
+ try{
+  const o=c.createOscillator(),g=c.createGain();
+  o.type='sine';o.frequency.setValueAtTime(660,c.currentTime);
+  o.frequency.exponentialRampToValueAtTime(880,c.currentTime+.07);
+  g.gain.setValueAtTime(.11,c.currentTime);
+  g.gain.exponentialRampToValueAtTime(.001,c.currentTime+.22);
+  o.connect(g);g.connect(c.destination);
+  o.start();o.stop(c.currentTime+.23);
+ }catch(e){}
+}
+function bump(a,b,sp){if(sp<.3||!soundOn())return;const t=performance.now();if(t-lastBump<70)return;lastBump=t;
+ const i=(Math.abs(Number(a.color)||0)+Math.abs(Number(b.color)||0)*2)%NOTES.length;
+ tone(NOTES[i]*(sp>6?.5:1),Math.min(.09,.018+sp*.006)*(.5+.25*(a.depth+b.depth)),.5)}
+function chime(){ui('chime')}
+function tick(){const t=performance.now();if(t-lastTick<60)return;lastTick=t;ui('tick')}
+function sweep(){ui('sweep')}
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('button');if(!b||b.disabled||b.classList.contains('planet'))return;tick()},true);
+function audioStateText(){const m={running:'声音已就绪。听不到的话，请检查手机音量，并确认不是在 App 的内置预览窗口里打开。',suspended:'声音被暂停了，轻触一下屏幕就会唤醒。',interrupted:'声音被系统打断了，轻触一下屏幕就会唤醒。',closed:'声音通道已关闭，请刷新页面。'};
+ return (AC?(m[AC.state]||AC.state):'声音还没启动，轻触一下屏幕就会启动。')+(ambEl?'（音乐正用备用方式播放）':'')}
+function makeReverb(c,sec){const len=Math.round(c.sampleRate*sec),buf=c.createBuffer(2,len,c.sampleRate);for(let ch=0;ch<2;ch++){const d=buf.getChannelData(ch);for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,2.6)}return buf}
+function sparkle(){
+ if(!amb)return;const c=AC;
+ if(c&&c.state==='running'){const f=SPK[Math.floor(Math.random()*SPK.length)],o=c.createOscillator(),g=c.createGain();o.type='sine';o.frequency.value=f;
+  g.gain.setValueAtTime(0,c.currentTime);g.gain.linearRampToValueAtTime(.05,c.currentTime+.04);g.gain.exponentialRampToValueAtTime(.0004,c.currentTime+3.2);
+  o.connect(g);g.connect(amb.rv);g.connect(amb.master);o.start();o.stop(c.currentTime+3.3)}
+ spkTimer=setTimeout(sparkle,7000+Math.random()*9000)}
+function ambient(on){
+ if(!on&&ambEl){try{ambEl.pause()}catch(e){}ambEl=null}
+ const c=AC;if(!c)return;
+ if(on&&!amb&&!ambEl&&c.state==='running'){
+  const master=c.createGain();master.gain.value=0;master.connect(c.destination);
+  const dry=c.createGain();dry.gain.value=.55;dry.connect(master);
+  const rv=c.createConvolver();rv.buffer=makeReverb(c,4);const wet=c.createGain();wet.gain.value=.9;rv.connect(wet);wet.connect(master);
+  const lp=c.createBiquadFilter();lp.type='lowpass';lp.frequency.value=900;lp.Q.value=.4;lp.connect(dry);lp.connect(rv);
+  const cut=c.createOscillator(),cg=c.createGain();cut.frequency.value=.04;cg.gain.value=380;cut.connect(cg);cg.connect(lp.frequency);cut.start();
+  const oscs=CHORDS[0].map((f,i)=>{const o=c.createOscillator(),g=c.createGain();o.type=i%2?'triangle':'sine';o.frequency.value=f;o.detune.value=(i-2)*4;g.gain.value=[.34,.3,.26,.2,.16][i];o.connect(g);g.connect(lp);o.start();return o});
+  master.gain.setTargetAtTime(.1,c.currentTime,2.5);
+  amb={master,oscs,cut,rv,lp};chordI=0;
+  const next=()=>{if(!amb)return;chordI=(chordI+1)%CHORDS.length;amb.oscs.forEach((o,i)=>o.frequency.setTargetAtTime(CHORDS[chordI][i],c.currentTime,3.2));ambTimer=setTimeout(next,42000)};
+  ambTimer=setTimeout(next,42000);sparkle()}
+ else if(!on&&amb){const a=amb;amb=null;clearTimeout(ambTimer);clearTimeout(spkTimer);a.master.gain.setTargetAtTime(0,c.currentTime,.6);
+  setTimeout(()=>{try{a.oscs.forEach(o=>o.stop());a.cut.stop();a.master.disconnect()}catch(e){}},3500)}}
+
+const dragging=new Set();
+function coreSize(p){return Math.round((p.isSystem?(p.sysType==='add'?58:54):(48+Math.round((p.progress||0)*.64)))*Math.max(.55,Math.min(2.2,Number(p.scale)||1)))}
+function lim(p,w,h){
+ const size=coreSize(p),sc=1,nameW=p.isSystem?0:Math.min(118,String(p.title||'').length*16);
+ const hw=Math.max(size,nameW)/2*sc+22,hv=(size+(p.isSystem?0:27)+((p.steps||[]).length?13:0))/2*sc+22;
+ return{x0:Math.min(.5,hw/w),x1:Math.max(.5,1-hw/w),y0:Math.min(.5,hv/h),y1:Math.max(.5,1-hv/h)};
+}
+let physicsLast=0,physicsFrame=0;
+function collisionPlay(ts=0){
+ physicsFrame=requestAnimationFrame(collisionPlay);scaleRecover();
+ if(localStorage.getItem('star_mind_collision')==='off'||$('overlay').classList.contains('show')){physicsLast=0;return}
+ const ps=allActive().filter(p=>p&&p.x!=null&&p.y!=null);
+ const box=$('universe').getBoundingClientRect(),w=Math.max(1,box.width),h=Math.max(1,box.height);
+ const dt=Math.min(.032,physicsLast?((ts-physicsLast)/1000):.016);physicsLast=ts;
+ ps.forEach(p=>{
+  if(!Number.isFinite(p.vx))p.vx=(Math.random()-.5)*.0009;
+  if(!Number.isFinite(p.vy))p.vy=(Math.random()-.5)*.0009;
+  if(dragging.has(p.id))return;
+  const k=.45+.55*p.depth;p.x+=p.vx*dt*60*k;p.y+=p.vy*dt*60*k;p.vx*=.995;p.vy*=.995;
+  const sp=Math.hypot(p.vx*w,p.vy*h);
+  if(sp<.12){if(sp>1e-6){p.vx*=.12/sp;p.vy*=.12/sp}else{const a=Math.random()*6.283;p.vx=Math.cos(a)*.12/w;p.vy=Math.sin(a)*.12/h}}
+  else if(sp>14){p.vx*=14/sp;p.vy*=14/sp}
+  const L=lim(p,w,h);
+  if(p.x<L.x0){p.x=L.x0;p.vx=Math.abs(p.vx)*.88}
+  if(p.x>L.x1){p.x=L.x1;p.vx=-Math.abs(p.vx)*.88}
+  if(p.y<L.y0){p.y=L.y0;p.vy=Math.abs(p.vy)*.88}
+  if(p.y>L.y1){p.y=L.y1;p.vy=-Math.abs(p.vy)*.88}
+ });
+ for(let it=0;it<2;it++)for(let i=0;i<ps.length;i++)for(let j=i+1;j<ps.length;j++){
+  const a=ps[i],b=ps[j],dx=(b.x-a.x)*w,dy=(b.y-a.y)*h,dist=Math.hypot(dx,dy);
+  const ra=coreSize(a)/2,rb=coreSize(b)/2,min=ra+rb+9;
+  if(dist>0&&dist<min){
+   const wa=dragging.has(a.id)?0:1,wb=dragging.has(b.id)?0:1,tw=wa+wb;if(!tw)continue;
+   const nx=dx/dist,ny=dy/dist,overlap=min-dist;
+   a.x-=nx*overlap*wa/tw/w;b.x+=nx*overlap*wb/tw/w;
+   a.y-=ny*overlap*wa/tw/h;b.y+=ny*overlap*wb/tw/h;
+   const avx=wa?(a.vx||0)*w:0,avy=wa?(a.vy||0)*h:0,bvx=wb?(b.vx||0)*w:0,bvy=wb?(b.vy||0)*h:0;
+   const rel=(bvx-avx)*nx+(bvy-avy)*ny;
+   if(rel<0){
+    const impulse=-(1.45)*rel/tw;
+    if(wa){a.vx=(avx-impulse*nx)/w;a.vy=(avy-impulse*ny)/h}
+    if(wb){b.vx=(bvx+impulse*nx)/w;b.vy=(bvy+impulse*ny)/h}bump(a,b,-rel);
+   }
+  }
+ }
+ const els={};document.querySelectorAll('.planet').forEach(e=>{els[e.dataset.pid]=e});
+ ps.forEach(p=>{
+  if(!dragging.has(p.id)){const L=lim(p,w,h);p.x=Math.max(L.x0,Math.min(L.x1,p.x));p.y=Math.max(L.y0,Math.min(L.y1,p.y))}
+  const el=els[p.id];if(el){el.style.left=(p.x*100)+'%';el.style.top=(p.y*100)+'%'}
+ });
+}
+starfield();{let rt;window.addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(starfield,250)})}bindPinchZoom();render();updateCounts();collisionPlay();
+if(musicOn())setTimeout(()=>{if(!AC||AC.state!=='running')toast('轻触屏幕，星空的声音会响起')},1500);
+document.addEventListener('visibilitychange',()=>{if(AC){if(document.hidden)AC.suspend();else{AC.resume();checkReminders()}}else if(!document.hidden)checkReminders()});
+setInterval(checkReminders,20000);checkReminders();applyTheme();
+document.addEventListener('visibilitychange',()=>{if(document.hidden)save()});
+window.addEventListener('pagehide',()=>save());
+})();
+</script>
+</body>
+</html>
